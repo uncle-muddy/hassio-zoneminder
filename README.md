@@ -18,7 +18,7 @@ A Home Assistant addon that integrates ZoneMinder security camera system, provid
 2. Navigate to **Settings** → **Add-ons** → **Add-on Store**
 3. Click the three dots menu (⋮) in the top right
 4. Select **Repositories**
-5. Add this repository URL: `https://github.com/yourusername/hassio-zoneminder`
+5. Add this repository URL: `https://github.com/uncle-muddy/hassio-zoneminder`
 6. Click **Add**
 7. Find "ZoneMinder Integration" in the add-on store
 8. Click **Install**
@@ -357,7 +357,7 @@ Fired when motion is detected on any monitor.
 ## Support
 
 For issues, questions, or feature requests:
-- GitHub Issues: https://github.com/yourusername/hassio-zoneminder/issues
+- GitHub Issues: https://github.com/uncle-muddy/hassio-zoneminder/issues
 - Home Assistant Community: https://community.home-assistant.io/
 
 ## License

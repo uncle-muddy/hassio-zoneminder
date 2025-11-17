@@ -78,4 +78,4 @@ Contributions are welcome! Please see CONTRIBUTING.md for guidelines.
 
 ---
 
-For more information, visit: https://github.com/yourusername/hassio-zoneminder
+For more information, visit: https://github.com/uncle-muddy/hassio-zoneminder
