@@ -52,8 +52,15 @@ class ZoneMinderAPI:
             
             if response.status_code == 200:
                 result = response.json()
+                # Store both token and cookies
                 self.token = result.get('access_token') or result.get('token')
+                
+                # ZoneMinder uses cookies for session management
+                # The session object will automatically store and send cookies
+                
                 logger.info("Successfully authenticated with ZoneMinder")
+                logger.debug(f"Token: {self.token}")
+                logger.debug(f"Cookies: {self.session.cookies.get_dict()}")
                 return True
             else:
                 logger.error(f"Login failed: {response.status_code}")
@@ -67,16 +74,16 @@ class ZoneMinderAPI:
         """Fetch all monitors from ZoneMinder."""
         try:
             url = f"{self.base_url}/monitors.json"
-            headers = {}
-            if self.token:
-                headers['Authorization'] = f'Bearer {self.token}'
             
+            # ZoneMinder uses cookies for authentication after login
+            # The session object automatically includes them
             response = self.session.get(
                 url,
-                headers=headers,
                 verify=self.ssl_verify,
                 timeout=10
             )
+            
+            logger.debug(f"Get monitors response status: {response.status_code}")
             
             if response.status_code == 200:
                 data = response.json()
@@ -99,6 +106,7 @@ class ZoneMinderAPI:
                 return monitors
             else:
                 logger.error(f"Failed to get monitors: {response.status_code}")
+                logger.debug(f"Response: {response.text}")
                 return {}
                 
         except Exception as e:
@@ -113,9 +121,6 @@ class ZoneMinderAPI:
         """Get events from ZoneMinder."""
         try:
             url = f"{self.base_url}/events.json"
-            headers = {}
-            if self.token:
-                headers['Authorization'] = f'Bearer {self.token}'
             
             params = {}
             if monitor_id:
@@ -125,7 +130,6 @@ class ZoneMinderAPI:
             
             response = self.session.get(
                 url,
-                headers=headers,
                 params=params,
                 verify=self.ssl_verify,
                 timeout=10
@@ -163,8 +167,6 @@ class ZoneMinderAPI:
         try:
             url = f"{self.base_url}/monitors/{monitor_id}.json"
             headers = {'Content-Type': 'application/json'}
-            if self.token:
-                headers['Authorization'] = f'Bearer {self.token}'
             
             data = {
                 "Monitor": {
