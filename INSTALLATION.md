@@ -57,7 +57,7 @@ You should receive a JSON response with a token or access_token.
 3. Click **Add-on Store** (bottom right)
 4. Click the three-dot menu (⋮) in the top right
 5. Select **Repositories**
-6. Add this URL: `https://github.com/yourusername/hassio-zoneminder`
+6. Add this URL: `https://github.com/uncle-muddy/hassio-zoneminder`
 7. Click **Add** → **Close**
 8. Refresh the add-on store page
 9. Find **ZoneMinder Integration** in the list

@@ -16,7 +16,7 @@ Make sure you know:
 
 1. In Home Assistant, go to: **Settings** → **Add-ons** → **Add-on Store**
 2. Click **⋮** (menu) → **Repositories**
-3. Add: `https://github.com/yourusername/hassio-zoneminder`
+3. Add: `https://github.com/uncle-muddy/hassio-zoneminder`
 4. Find "ZoneMinder Integration" and click **Install**
 
 ### 3. Configure (2 minutes)
