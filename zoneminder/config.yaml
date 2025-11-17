@@ -1,5 +1,5 @@
 name: ZoneMinder Integration
-version: "1.0.0"
+version: "1.0.1"
 slug: zoneminder
 description: Integrate ZoneMinder cameras, events, and motion detection with Home Assistant
 url: https://github.com/uncle-muddy/hassio-zoneminder
