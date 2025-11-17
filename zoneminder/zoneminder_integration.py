@@ -40,7 +40,8 @@ class ZoneMinderAPI:
             login_url = f"{self.base_url}/host/login.json"
             data = {
                 "user": self.user,
-                "pass": self.password
+                "pass": self.password,
+                "stateful": "1"  # Request a stateful token for API v2.0
             }
             
             response = self.session.post(
@@ -52,18 +53,19 @@ class ZoneMinderAPI:
             
             if response.status_code == 200:
                 result = response.json()
-                # Store both token and cookies
+                # Get the access_token from the response
                 self.token = result.get('access_token') or result.get('token')
                 
-                # ZoneMinder uses cookies for session management
-                # The session object will automatically store and send cookies
-                
-                logger.info("Successfully authenticated with ZoneMinder")
-                logger.debug(f"Token: {self.token}")
-                logger.debug(f"Cookies: {self.session.cookies.get_dict()}")
-                return True
+                if self.token:
+                    logger.info("Successfully authenticated with ZoneMinder")
+                    logger.debug(f"Token: {self.token[:20]}..." if len(self.token) > 20 else self.token)
+                    return True
+                else:
+                    logger.error("No token received from ZoneMinder")
+                    return False
             else:
                 logger.error(f"Login failed: {response.status_code}")
+                logger.error(f"Response: {response.text}")
                 return False
                 
         except Exception as e:
@@ -75,10 +77,14 @@ class ZoneMinderAPI:
         try:
             url = f"{self.base_url}/monitors.json"
             
-            # ZoneMinder uses cookies for authentication after login
-            # The session object automatically includes them
+            # For API v2.0, pass token as URL parameter
+            params = {}
+            if self.token:
+                params['token'] = self.token
+            
             response = self.session.get(
                 url,
+                params=params,
                 verify=self.ssl_verify,
                 timeout=10
             )
@@ -115,7 +121,10 @@ class ZoneMinderAPI:
     
     def get_monitor_stream_url(self, monitor_id: str) -> str:
         """Get the stream URL for a monitor."""
-        return f"{self.host}:{self.port}{self.path}/cgi-bin/nph-zms?mode=jpeg&monitor={monitor_id}&scale=100"
+        base_stream = f"{self.host}:{self.port}{self.path}/cgi-bin/nph-zms?mode=jpeg&monitor={monitor_id}&scale=100"
+        if self.token:
+            return f"{base_stream}&token={self.token}"
+        return base_stream
     
     def get_events(self, monitor_id: Optional[str] = None, since: Optional[datetime] = None) -> List[Dict]:
         """Get events from ZoneMinder."""
@@ -123,6 +132,8 @@ class ZoneMinderAPI:
             url = f"{self.base_url}/events.json"
             
             params = {}
+            if self.token:
+                params['token'] = self.token
             if monitor_id:
                 params['MonitorId'] = monitor_id
             if since:
@@ -168,6 +179,10 @@ class ZoneMinderAPI:
             url = f"{self.base_url}/monitors/{monitor_id}.json"
             headers = {'Content-Type': 'application/json'}
             
+            params = {}
+            if self.token:
+                params['token'] = self.token
+            
             data = {
                 "Monitor": {
                     "Function": function
@@ -177,6 +192,7 @@ class ZoneMinderAPI:
             response = self.session.put(
                 url,
                 headers=headers,
+                params=params,
                 json=data,
                 verify=self.ssl_verify,
                 timeout=10
