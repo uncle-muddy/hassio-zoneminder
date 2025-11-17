@@ -28,4 +28,3 @@ schema:
   zm_ssl_verify: bool
   scan_interval: int(1,3600)
   event_check_interval: int(5,300)
-image: ghcr.io/uncle-muddy/hassio-zoneminder-{arch}
