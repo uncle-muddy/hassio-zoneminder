@@ -216,15 +216,28 @@ class HomeAssistantAPI:
     def __init__(self):
         """Initialize Home Assistant API connection."""
         self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        
+        if not self.supervisor_token:
+            logger.warning("SUPERVISOR_TOKEN not found in environment")
+            logger.debug(f"Available env vars: {list(os.environ.keys())}")
+        else:
+            logger.debug(f"SUPERVISOR_TOKEN found: {self.supervisor_token[:20]}...")
+        
         self.ha_url = "http://supervisor/core/api"
         self.session = requests.Session()
-        self.session.headers.update({
-            'Authorization': f'Bearer {self.supervisor_token}',
-            'Content-Type': 'application/json'
-        })
+        
+        if self.supervisor_token:
+            self.session.headers.update({
+                'Authorization': f'Bearer {self.supervisor_token}',
+                'Content-Type': 'application/json'
+            })
     
     def fire_event(self, event_type: str, event_data: Dict) -> bool:
         """Fire an event in Home Assistant."""
+        if not self.supervisor_token:
+            logger.error("Cannot fire event: No SUPERVISOR_TOKEN available")
+            return False
+            
         try:
             url = f"{self.ha_url}/events/{event_type}"
             response = self.session.post(url, json=event_data, timeout=5)
@@ -234,6 +247,7 @@ class HomeAssistantAPI:
                 return True
             else:
                 logger.error(f"Failed to fire event: {response.status_code}")
+                logger.debug(f"Response: {response.text}")
                 return False
                 
         except Exception as e:
@@ -242,6 +256,10 @@ class HomeAssistantAPI:
     
     def update_sensor(self, entity_id: str, state: str, attributes: Dict = None) -> bool:
         """Update a sensor state in Home Assistant."""
+        if not self.supervisor_token:
+            logger.error("Cannot update sensor: No SUPERVISOR_TOKEN available")
+            return False
+            
         try:
             url = f"{self.ha_url}/states/{entity_id}"
             data = {
@@ -256,6 +274,7 @@ class HomeAssistantAPI:
                 return True
             else:
                 logger.error(f"Failed to update sensor: {response.status_code}")
+                logger.debug(f"Response: {response.text}")
                 return False
                 
         except Exception as e:

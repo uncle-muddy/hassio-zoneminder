@@ -1,5 +1,5 @@
 name: ZoneMinder Integration
-version: "1.0.1"
+version: "1.0.2"
 slug: zoneminder
 description: Integrate ZoneMinder cameras, events, and motion detection with Home Assistant
 url: https://github.com/uncle-muddy/hassio-zoneminder
@@ -10,6 +10,9 @@ arch:
   - armv7
   - i386
 init: false
+hassio_api: true
+homeassistant_api: true
+auth_api: true
 options:
   zm_host: "http://192.168.1.100"
   zm_port: 80
