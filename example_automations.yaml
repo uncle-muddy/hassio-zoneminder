@@ -1,0 +1,210 @@
+# Example Automations for ZoneMinder Integration
+# Add these to your configuration.yaml or automations.yaml
+
+automation:
+  # Basic motion notification
+  - id: 'zoneminder_motion_notify'
+    alias: 'ZoneMinder Motion Detection Notification'
+    description: 'Send notification when any camera detects motion'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+    action:
+      - service: notify.mobile_app_your_phone
+        data:
+          title: 'Motion Detected'
+          message: 'Motion on {{ trigger.event.data.monitor_name }} at {{ trigger.event.data.start_time }}'
+          data:
+            tag: 'zoneminder_motion'
+            group: 'security'
+
+  # Turn on lights when motion detected at night
+  - id: 'zoneminder_night_lights'
+    alias: 'ZoneMinder Night Motion Lights'
+    description: 'Turn on exterior lights when motion detected at night'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+        event_data:
+          monitor_name: 'Front Door'
+    condition:
+      - condition: sun
+        after: sunset
+        after_offset: '-00:30:00'
+      - condition: sun
+        before: sunrise
+        before_offset: '00:30:00'
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.exterior_lights
+        data:
+          brightness: 255
+      - delay: '00:05:00'
+      - service: light.turn_off
+        target:
+          entity_id: light.exterior_lights
+
+  # Send snapshot when motion detected
+  - id: 'zoneminder_motion_snapshot'
+    alias: 'ZoneMinder Motion Snapshot'
+    description: 'Send camera snapshot when motion detected'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+    action:
+      - service: camera.snapshot
+        data:
+          filename: '/config/www/snapshots/zm_{{ trigger.event.data.monitor_id }}_{{ now().strftime("%Y%m%d_%H%M%S") }}.jpg'
+          entity_id: 'camera.zoneminder_{{ trigger.event.data.monitor_name | lower | replace(" ", "_") }}'
+      - service: notify.mobile_app_your_phone
+        data:
+          title: 'Motion Detected'
+          message: 'Motion on {{ trigger.event.data.monitor_name }}'
+          data:
+            image: '/local/snapshots/zm_{{ trigger.event.data.monitor_id }}_{{ now().strftime("%Y%m%d_%H%M%S") }}.jpg'
+
+  # High alarm frame count alert
+  - id: 'zoneminder_high_activity'
+    alias: 'ZoneMinder High Activity Alert'
+    description: 'Alert on significant motion events'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+    condition:
+      - condition: template
+        value_template: '{{ trigger.event.data.alarm_frames | int > 30 }}'
+    action:
+      - service: notify.mobile_app_your_phone
+        data:
+          title: 'High Motion Activity'
+          message: 'Significant motion detected on {{ trigger.event.data.monitor_name }}'
+          data:
+            priority: high
+            ttl: 0
+
+  # Away mode security alert
+  - id: 'zoneminder_away_alert'
+    alias: 'ZoneMinder Away Mode Alert'
+    description: 'High priority alert when away from home'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+    condition:
+      - condition: state
+        entity_id: person.your_name
+        state: 'not_home'
+    action:
+      - service: notify.mobile_app_your_phone
+        data:
+          title: 'Security Alert - Motion While Away'
+          message: 'Motion detected on {{ trigger.event.data.monitor_name }} at {{ trigger.event.data.start_time }}'
+          data:
+            priority: high
+            ttl: 0
+            actions:
+              - action: 'VIEW_CAMERA'
+                title: 'View Camera'
+              - action: 'CALL_POLICE'
+                title: 'Call Emergency'
+
+  # Log all motion events
+  - id: 'zoneminder_motion_log'
+    alias: 'ZoneMinder Motion Event Log'
+    description: 'Log all motion detection events'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+    action:
+      - service: logbook.log
+        data:
+          name: 'ZoneMinder'
+          message: 'Motion detected on {{ trigger.event.data.monitor_name }}'
+          entity_id: 'camera.zoneminder_{{ trigger.event.data.monitor_name | lower | replace(" ", "_") }}'
+
+  # Multiple cameras trigger
+  - id: 'zoneminder_multiple_cameras'
+    alias: 'ZoneMinder Multiple Camera Alert'
+    description: 'Alert when multiple cameras detect motion simultaneously'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+    action:
+      - delay: '00:00:05'
+      - condition: template
+        value_template: >
+          {{ states.camera 
+             | selectattr('state', 'eq', 'motion_detected') 
+             | selectattr('entity_id', 'match', 'camera.zoneminder_.*')
+             | list | count > 1 }}
+      - service: notify.mobile_app_your_phone
+        data:
+          title: 'Multiple Motion Detection'
+          message: 'Motion detected on multiple cameras!'
+          data:
+            priority: high
+
+  # Integration with alarm system
+  - id: 'zoneminder_alarm_integration'
+    alias: 'ZoneMinder Alarm System Integration'
+    description: 'Trigger alarm when motion detected while armed'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+    condition:
+      - condition: state
+        entity_id: alarm_control_panel.home_alarm
+        state: 'armed_away'
+    action:
+      - service: alarm_control_panel.alarm_trigger
+        target:
+          entity_id: alarm_control_panel.home_alarm
+      - service: notify.mobile_app_your_phone
+        data:
+          title: 'ALARM TRIGGERED'
+          message: 'Motion detected on {{ trigger.event.data.monitor_name }} while alarm armed!'
+          data:
+            priority: high
+            ttl: 0
+
+  # Announce motion on smart speakers
+  - id: 'zoneminder_announce_motion'
+    alias: 'ZoneMinder Announce Motion'
+    description: 'Announce motion detection on smart speakers'
+    trigger:
+      - platform: event
+        event_type: zoneminder_motion_detected
+        event_data:
+          monitor_name: 'Front Door'
+    action:
+      - service: tts.google_translate_say
+        data:
+          entity_id: media_player.living_room_speaker
+          message: 'Motion detected at the {{ trigger.event.data.monitor_name }}'
+
+# Template Sensors for Dashboard
+template:
+  - sensor:
+      - name: "ZoneMinder Active Monitors"
+        state: >
+          {{ states.camera 
+             | selectattr('entity_id', 'match', 'camera.zoneminder_.*')
+             | selectattr('attributes.enabled', 'eq', true)
+             | list | count }}
+        
+      - name: "ZoneMinder Motion Status"
+        state: >
+          {% set motion = states.camera 
+             | selectattr('entity_id', 'match', 'camera.zoneminder_.*')
+             | selectattr('state', 'eq', 'motion_detected')
+             | list | count %}
+          {{ 'Motion Detected' if motion > 0 else 'Clear' }}
+        
+      - name: "ZoneMinder Last Motion"
+        state: >
+          {% set cameras = states.camera 
+             | selectattr('entity_id', 'match', 'camera.zoneminder_.*')
+             | selectattr('attributes.last_event_time', 'defined')
+             | sort(attribute='attributes.last_event_time', reverse=true)
+             | list %}
+          {{ cameras[0].attributes.last_event_time if cameras | count > 0 else 'Never' }}

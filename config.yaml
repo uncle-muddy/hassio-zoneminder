@@ -1,0 +1,31 @@
+name: ZoneMinder Integration
+version: "1.0.0"
+slug: zoneminder
+description: Integrate ZoneMinder cameras, events, and motion detection with Home Assistant
+url: https://github.com/yourusername/hassio-zoneminder
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+init: false
+options:
+  zm_host: "http://192.168.1.100"
+  zm_port: 80
+  zm_path: "/zm"
+  zm_user: "admin"
+  zm_password: "admin"
+  zm_ssl_verify: true
+  scan_interval: 30
+  event_check_interval: 10
+schema:
+  zm_host: str
+  zm_port: int
+  zm_path: str
+  zm_user: str
+  zm_password: password
+  zm_ssl_verify: bool
+  scan_interval: int(1,3600)
+  event_check_interval: int(5,300)
+image: ghcr.io/yourusername/hassio-zoneminder-{arch}
